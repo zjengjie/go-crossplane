@@ -10,9 +10,10 @@ import (
 )
 
 type BuildOptions struct {
-	Indent int
-	Tabs   bool
-	Header bool
+	Indent   int
+	Tabs     bool
+	Header   bool
+	SpaceRow bool
 }
 
 // BuildFiles builds all of the config files in a crossplane.Payload and
@@ -80,8 +81,12 @@ func Build(w io.Writer, config Config, options *BuildOptions) error {
 }
 
 func buildBlock(output string, block []Directive, depth int, lastLine int, options *BuildOptions) string {
+	preBlock := false
 	for _, stmt := range block {
 		var built string
+		if len(output) > 0 && (stmt.Block != nil || preBlock) {
+			output += "\n"
+		}
 
 		if stmt.IsComment() && stmt.Line == lastLine {
 			output += " #" + *stmt.Comment
@@ -106,6 +111,9 @@ func buildBlock(output string, block []Directive, depth int, lastLine int, optio
 			if stmt.Block == nil {
 				built += ";"
 			} else {
+				if options.SpaceRow {
+					output += "\n"
+				}
 				built += " {"
 				built = buildBlock(built, *stmt.Block, depth+1, stmt.Line, options)
 				built += "\n" + margin(options, depth) + "}"
@@ -116,6 +124,7 @@ func buildBlock(output string, block []Directive, depth int, lastLine int, optio
 		}
 		output += margin(options, depth) + built
 		lastLine = stmt.Line
+		preBlock = stmt.Block != nil
 	}
 
 	return output
