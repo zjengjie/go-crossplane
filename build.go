@@ -10,9 +10,10 @@ import (
 )
 
 type BuildOptions struct {
-	Indent int
-	Tabs   bool
-	Header bool
+	Indent   int
+	Tabs     bool
+	Header   bool
+	SpaceRow bool
 }
 
 // BuildFiles builds all of the config files in a crossplane.Payload and
@@ -113,6 +114,9 @@ func buildBlock(output string, block []Directive, depth int, lastLine int, optio
 		}
 		if len(output) > 0 {
 			output += "\n"
+			if options.SpaceRow {
+				output += "\n"
+			}
 		}
 		output += margin(options, depth) + built
 		lastLine = stmt.Line
