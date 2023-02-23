@@ -11,6 +11,8 @@ import (
 
 var dfltFileOpen = func(path string) (io.Reader, error) { return os.Open(path) }
 
+var dfltFileClose = func(reader io.Reader) error { return reader.(*os.File).Close() }
+
 var hasMagic = regexp.MustCompile(`[*?[]`)
 
 type blockCtx []string
@@ -69,6 +71,8 @@ type ParseOptions struct {
 
 	// If specified, use this alternative to open config files
 	Open func(path string) (io.Reader, error)
+
+	Close func(reader io.Reader) error
 }
 
 // Parse parses an NGINX configuration file.
@@ -111,6 +115,10 @@ func Parse(filename string, options *ParseOptions) (*Payload, error) {
 	if options.Open != nil {
 		fileOpen = options.Open
 	}
+	fileClose := dfltFileClose
+	if options.Close != nil {
+		fileClose = options.Close
+	}
 
 	for len(p.includes) > 0 {
 		incl := p.includes[0]
@@ -139,6 +147,7 @@ func Parse(filename string, options *ParseOptions) (*Payload, error) {
 		}
 
 		payload.Config = append(payload.Config, config)
+		err = fileClose(file)
 	}
 
 	if options.CombineConfigs {
