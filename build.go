@@ -118,6 +118,9 @@ func buildBlock(output string, block []Directive, depth int, lastLine int, optio
 		}
 		if len(output) > 0 {
 			output += "\n"
+			if options.SpaceRow {
+				output += "\n"
+			}
 		}
 		output += margin(options, depth) + built
 		lastLine = stmt.Line
